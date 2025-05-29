@@ -19,8 +19,7 @@ HEADERS = {
 # Create output directory if it doesn't exist
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-MAX_ARTICLES = 30  # Number of articles to process
-
+MAX_ARTICLES = 5  # Number of articles to process
 
 def slugify(text):
     """
@@ -28,7 +27,6 @@ def slugify(text):
     """
     text = text.lower().strip().replace(" ", "-").replace("/", "-")
     return re.sub(r'[^a-zA-Z0-9\-_]', '', text)  # Remove illegal filename characters
-
 
 def get_articles(max_articles=MAX_ARTICLES):
     """
@@ -40,7 +38,6 @@ def get_articles(max_articles=MAX_ARTICLES):
     page = 1
     per_page = max_articles  # Fetch just enough on page 1 if possible
 
-    # Sort by updated_at descending (most recent first)
     params = {
         "page": page,
         "per_page": per_page,
@@ -61,10 +58,8 @@ def get_articles(max_articles=MAX_ARTICLES):
         print("💾 Saved full API response to api_response.json")
 
     articles = data.get("articles", [])
-
     print(f"✅ Retrieved {len(articles)} articles.")
     return articles[:max_articles]
-
 
 def clean_article_html(html):
     """
@@ -74,7 +69,6 @@ def clean_article_html(html):
     for tag in soup.select("nav, footer, .header, .breadcrumbs"):
         tag.decompose()
     return md(str(soup))
-
 
 def download_and_convert():
     """
@@ -93,22 +87,39 @@ def download_and_convert():
         print(f"⬇️  Converting: {title}")
         md_content = clean_article_html(html)
         slug = slugify(title)[:50]  # limit filename length
-        output_path = f"{OUTPUT_DIR}/{slug}.md"
+        md_output_path = f"{OUTPUT_DIR}/{slug}.md"
+        json_output_path = f"{OUTPUT_DIR}/{slug}.json"
+
         try:
-            with open(output_path, "w", encoding="utf-8") as f:
+            with open(md_output_path, "w", encoding="utf-8") as f:
                 f.write(md_content)
-            print(f"📝 Saved: {output_path}")
+            print(f"📝 Saved Markdown: {md_output_path}")
+
+            metadata = {
+                "id": article.get("id"),
+                "title": article.get("title"),
+                "html_url": article.get("html_url"),
+                "label_names": article.get("label_names", []),
+                "created_at": article.get("created_at"),
+                "updated_at": article.get("updated_at"),
+                "section_id": article.get("section_id"),
+                "content_tag_ids": article.get("content_tag_ids", [])
+            }
+
+            with open(json_output_path, "w", encoding="utf-8") as f:
+                json.dump(metadata, f, indent=2)
+            print(f"📎 Saved Metadata: {json_output_path}")
+
         except OSError as e:
-            print(f"❌ Failed to save {slug}.md: {e}")
+            print(f"❌ Failed to save files for {slug}: {e}")
             continue
 
         count += 1
         if count >= MAX_ARTICLES:
-            print("🚦 Reached 30 articles. Stopping.")
+            print("🚦 Reached article limit. Stopping.")
             break
 
-    print(f"✅ Finished writing {count} Markdown files to ./{OUTPUT_DIR}")
-
+    print(f"✅ Finished writing {count} Markdown and JSON files to ./{OUTPUT_DIR}")
 
 if __name__ == "__main__":
     print("🚀 Starting scraper using Zendesk API (most recent articles)...")
