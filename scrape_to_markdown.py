@@ -2,13 +2,14 @@
 
 import os
 import re
+import json
 import requests
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
 import hashlib
 from urllib.parse import urlparse
 
-# Base URL for API and article content
+# Base URL for API and article content (sorted by most recently updated)
 API_URL = "https://support.optisigns.com/api/v2/help_center/en-us/articles.json"
 OUTPUT_DIR = "data"
 HEADERS = {
@@ -18,6 +19,9 @@ HEADERS = {
 # Create output directory if it doesn't exist
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+MAX_ARTICLES = 30  # Number of articles to process
+
+
 def slugify(text):
     """
     Create a filename-safe slug from article title or URL.
@@ -25,35 +29,42 @@ def slugify(text):
     text = text.lower().strip().replace(" ", "-").replace("/", "-")
     return re.sub(r'[^a-zA-Z0-9\-_]', '', text)  # Remove illegal filename characters
 
-def get_articles():
+
+def get_articles(max_articles=MAX_ARTICLES):
     """
-    Use the Zendesk API to get article metadata and body HTML.
+    Use the Zendesk API to get the most recently updated article metadata and body HTML.
+    Only fetch as many articles as needed.
     """
-    print("🔍 Fetching articles via Zendesk API...")
+    print("🔍 Fetching most recently updated articles via Zendesk API...")
     articles = []
     page = 1
-    while True:
-        print(f"🌐 Fetching page {page} from Zendesk API...")
-        res = requests.get(API_URL, params={"page": page}, headers=HEADERS)
-        if res.status_code != 200:
-            print(f"❌ Failed to fetch page {page}: status {res.status_code}")
-            break
+    per_page = max_articles  # Fetch just enough on page 1 if possible
 
-        data = res.json()
-        batch = data.get("articles", [])
-        if not batch:
-            print("🚫 No more articles found. Done.")
-            break
+    # Sort by updated_at descending (most recent first)
+    params = {
+        "page": page,
+        "per_page": per_page,
+        "sort_by": "updated_at",
+        "sort_order": "desc"
+    }
 
-        articles.extend(batch)
+    res = requests.get(API_URL, params=params, headers=HEADERS)
+    if res.status_code != 200:
+        print(f"❌ Failed to fetch articles: status {res.status_code}")
+        return []
 
-        if not data.get("next_page"):
-            break
+    data = res.json()
 
-        page += 1
+    # Save the full JSON response
+    with open("api_response.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+        print("💾 Saved full API response to api_response.json")
 
-    print(f"✅ Retrieved {len(articles)} total articles.")
-    return articles
+    articles = data.get("articles", [])
+
+    print(f"✅ Retrieved {len(articles)} articles.")
+    return articles[:max_articles]
+
 
 def clean_article_html(html):
     """
@@ -63,6 +74,7 @@ def clean_article_html(html):
     for tag in soup.select("nav, footer, .header, .breadcrumbs"):
         tag.decompose()
     return md(str(soup))
+
 
 def download_and_convert():
     """
@@ -91,13 +103,14 @@ def download_and_convert():
             continue
 
         count += 1
-        if count >= 30:
+        if count >= MAX_ARTICLES:
             print("🚦 Reached 30 articles. Stopping.")
             break
 
     print(f"✅ Finished writing {count} Markdown files to ./{OUTPUT_DIR}")
 
+
 if __name__ == "__main__":
-    print("🚀 Starting scraper using Zendesk API (direct body)...")
+    print("🚀 Starting scraper using Zendesk API (most recent articles)...")
     download_and_convert()
     print("🏁 Done!")
