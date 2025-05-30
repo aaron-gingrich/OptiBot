@@ -3,6 +3,7 @@ name: Daily Scrape and Upload
 on:
   schedule:
     - cron: '35 4 * * *' # Runs every day at 3 AM UTC
+  workflow_dispatch:
 
 jobs:
   run-optibot:
