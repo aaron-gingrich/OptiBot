@@ -14,7 +14,6 @@ OUTPUT_DIR = "data"
 HEADERS = {
     "User-Agent": "Mozilla/5.0"
 }
-MAX_ARTICLES = 5  # Limit to 5 articles
 
 # Ensure output directory exists
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -29,12 +28,12 @@ def hash_content(content):
     return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
 def get_articles():
-    """Fetch articles using pagination and stop after MAX_ARTICLES."""
+    """Fetch all articles using pagination."""
     print("Fetching articles via Zendesk API with pagination...")
     articles = []
     next_page = API_URL
 
-    while next_page and len(articles) < MAX_ARTICLES:
+    while next_page:
         res = requests.get(next_page, headers=HEADERS)
         if res.status_code != 200:
             print(f"❌ Failed to fetch page: {next_page} - Status {res.status_code}")
@@ -47,7 +46,8 @@ def get_articles():
 
         print(f"Retrieved {len(page_articles)} articles (Total: {len(articles)})")
 
-    return articles[:MAX_ARTICLES]
+
+    return articles
 
 def clean_article_html(html):
     """Clean up article HTML and convert to Markdown."""
@@ -114,6 +114,6 @@ def download_and_convert():
     print(f"Finished writing {count} Markdown and JSON files to ./{OUTPUT_DIR}")
 
 if __name__ == "__main__":
-    print("Starting scraper using Zendesk API (max 5 articles)...")
+    print("Starting scraper using Zendesk API (all articles)...")
     download_and_convert()
     print("Done!")
