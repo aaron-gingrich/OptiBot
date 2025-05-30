@@ -20,7 +20,7 @@ jobs:
         run: mkdir -p data logs
 
       - name: Download previous upload_log.json
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: upload-log
           path: data/
@@ -38,7 +38,7 @@ jobs:
             optibot
 
       - name: Upload updated upload_log.json
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: upload-log
           path: data/upload_log.json
