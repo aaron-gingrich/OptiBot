@@ -24,7 +24,7 @@ jobs:
         with:
           name: upload-log
           path: data/
-        continue-on-error: true  # Allow first run without failure
+        continue-on-error: true  # Allows first run to proceed without error
 
       - name: Build Docker image
         run: docker build -t optibot .
