@@ -2,7 +2,7 @@ name: Daily Scrape and Upload
 
 on:
   schedule:
-    - cron: '35 4 * * *' # Runs every day at 3 AM UTC
+    - cron: "0 12 * * *"  # 6:00 AM CST (12:00 PM UTC)
   workflow_dispatch:
 
 jobs:
@@ -16,11 +16,29 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
 
+      - name: Prepare local data & logs folders
+        run: mkdir -p data logs
+
+      - name: Download previous upload_log.json
+        uses: actions/download-artifact@v3
+        with:
+          name: upload-log
+          path: data/
+        continue-on-error: true  # Allow first run without failure
+
       - name: Build Docker image
         run: docker build -t optibot .
 
       - name: Run Docker container
         run: |
           docker run \
+            -v ${{ github.workspace }}/data:/app/data \
+            -v ${{ github.workspace }}/logs:/app/logs \
             -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
             optibot
+
+      - name: Upload updated upload_log.json
+        uses: actions/upload-artifact@v3
+        with:
+          name: upload-log
+          path: data/upload_log.json
