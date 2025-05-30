@@ -1,0 +1,25 @@
+name: Daily Scrape and Upload
+
+on:
+  schedule:
+    - cron: '35 4 * * *' # Runs every day at 3 AM UTC
+
+jobs:
+  run-optibot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: docker build -t optibot .
+
+      - name: Run Docker container
+        run: |
+          docker run \
+            -e OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
+            optibot
