@@ -1,7 +1,7 @@
 OptiBot Mini-Clone
 ==================
 
-This project is a streamlined clone of the OptiSigns support bot. It scrapes articles from the OptiSigns Zendesk help center, converts them into Markdown with embedded metadata, uploads them to OpenAI’s vector store via API, and runs as a daily job to keep the knowledge base up to date.
+This project is a streamlined clone of the OptiSigns support bot. It scrapes articles from the OptiSigns Zendesk help center, converts them into Markdown with embedded metadata, uploads them to OpenAI's vector store via API, and runs as a daily job to keep the knowledge base up to date.
 
 Setup
 -----
@@ -26,6 +26,13 @@ Create a `.env` file:
 ```
 cp .env.sample .env
 ```
+
+Get your OpenAI API key:
+1. Go to https://platform.openai.com/playground/
+2. Sign up for a free account if you don't have one
+3. Click the gear icon (⚙️) in the top right corner
+4. Under "Organization", click on "API keys"
+5. Click "Create new secret key" to generate your API key
 
 Update `.env` with your OpenAI API key:
 
