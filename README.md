@@ -87,20 +87,105 @@ docker build -t optibot .
 ### Run the Job
 
 ```
-docker run -e OPENAI_API_KEY=your-api-key optibot
+docker run --rm `
+  -v "$(Get-Location)\data:/app/data" `
+  -v "$(Get-Location)\logs:/app/logs" `
+  --env-file .env `
+  optibot
 ```
 
 Deployment as Daily Job
 ------------------------
 
-This project is designed to be deployed as a scheduled job using DigitalOcean App Platform or any other cloud job runner.
+You can deploy OptiBot as a scheduled job using a **DigitalOcean Droplet** to run daily.
 
-Daily job behavior:
+###  Step 1: Create a DigitalOcean Account
 
-- Rescrapes articles from Zendesk
-- Compares article hashes to detect changes
-- Uploads only the delta (new or updated files)
-- Logs the run summary to a timestamped log file
+1. Go to https://www.digitalocean.com
+2. Sign up and verify your email
+3. Add a billing method
+
+###  Step 2: Create a Droplet
+
+1. Click **"Create" → "Droplet"**
+2. Select **Ubuntu 22.04 (x64)** as the OS
+3. Choose a **Basic shared CPU** plan (512MB or 1GB RAM is sufficient)
+4. Choose a region (closer to you is better)
+5. Enable SSH or set a root password
+6. Click **"Create Droplet"**
+
+Once created, copy the droplet’s IP address and SSH into it:
+
+```
+ssh root@your_droplet_ip
+```
+
+###  Step 3: Install Docker
+
+Run the following inside your droplet:
+
+```
+apt update && apt upgrade -y
+apt install -y docker.io git
+systemctl enable docker
+systemctl start docker
+```
+
+Verify Docker is installed:
+
+```
+docker --version
+```
+
+###  Step 4: Clone the Repository
+
+Inside the droplet:
+
+```
+git clone https://github.com/aaron-gingrich/OptiBot.git
+cd OptiBot
+```
+
+###  Step 5: Configure Environment Variables
+
+Create your `.env` file:
+
+```
+cp .env.sample .env
+nano .env
+```
+
+Paste your OpenAI API key and save.
+
+###  Step 6: Build the Docker Image
+
+```
+docker build -t optibot .
+```
+
+###  Step 7: Run the Bot Manually
+
+```
+mkdir -p ./data ./logs
+
+docker run --rm   -v "$(pwd)/data:/app/data"   -v "$(pwd)/logs:/app/logs"   --env-file .env   optibot
+```
+
+###  Step 8: Schedule Daily Cron Job
+
+Edit the crontab:
+
+```
+crontab -e
+```
+
+Add the following line to run the job every day at 8:00 AM server time:
+
+```
+0 8 * * * cd /root/OptiBot && git pull origin main && docker build -t optibot . && mkdir -p ./data ./logs && docker run --rm -v /root/OptiBot/data:/app/data -v /root/OptiBot/logs:/app/logs --env-file /root/OptiBot/.env optibot >> /root/OptiBot/logs/cron.log 2>&1
+```
+
+Save and exit. The job will now run daily.
 
 Assistant Usage
 ---------------
