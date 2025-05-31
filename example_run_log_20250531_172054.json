@@ -1,0 +1,9 @@
+{
+  "run_started": "2025-05-31T22:16:59.089907Z",
+  "run_ended": "2025-05-31T22:20:54.978842Z",
+  "added": 393,
+  "updated": 0,
+  "skipped": 0,
+  "attached_to_vector_store": true,
+  "upload_log_path": "data\\upload_log.json"
+}

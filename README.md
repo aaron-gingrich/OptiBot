@@ -196,7 +196,32 @@ After uploading content, the assistant can answer support questions using the up
 How do I add a YouTube video?
 ```
 
-Response should include up to three `Article URL:` citations based on matched context.
+![Example assistant response](./screenshots/assistant-response.png)
+
+Chunking Strategy
+-----------------
+
+We are using OpenAI's **automatic chunking strategy** when uploading files to the vector store. Each Markdown article is uploaded as a full document using the `/files` and `/vector-stores` API endpoints, and OpenAI automatically splits the content into optimal embeddings.
+
+This approach was tested in the OpenAI Playground with the assistant attached, and the responses returned accurate answers with correct `Article URL:` citations, confirming the chunking was handled effectively by OpenAI.
+
+Suggestions to Improve OptiBot
+------------------------------
+
+- Add thinking/typing indicator
+- Enable multilingual support for customers in non-English-speaking regions.
+
+
+How I Would Improve This Project
+--------------------------------
+
+If I had more time, I would:
+- Create a script that you run and it does all the installations
+- Take into account if article name changes but content does not. Currently this will just create a new file
+- Create web app to interact with bot
+- Email log report to admin/slack/teams
+- Add more error checking to ensure files are added correctly
+
 
 Project Structure
 -----------------
@@ -218,3 +243,5 @@ Requirements
 - Python 3.8+
 - OpenAI API key
 - Internet access for fetching Zendesk articles and uploading to OpenAI
+
+
